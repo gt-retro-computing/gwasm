@@ -1,0 +1,11 @@
+assembler
+*.o
+lexer.c
+parser.c
+lexer.h
+parser.h
+.idea/
+.vscode/
+*.out
+*.tmp
+parser
