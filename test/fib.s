@@ -1,5 +1,5 @@
 ;fib
-.org 0
+.org 0x0
 init:
 	;Test Noarg
 	sphl

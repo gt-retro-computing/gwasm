@@ -8,6 +8,8 @@
 
 char* instruction_names[] = {"invalid_ins", "mov", "mvi", "lxi", "lda", "sta", "lhld", "shld", "ldax", "stax", "xchg", "add", "adi", "adc", "aci", "sub", "sui", "sbb", "sbi", "inr", "dcr", "inx", "dcx", "dad", "daa", "ana", "ani", "ora", "ori", "xra", "xri", "cmp", "cpi", "rlc", "rrc", "ral", "rar", "cma", "cmc", "stc", "jmp", "jnz", "jz", "jnc", "jc", "jpo", "jpe", "jp", "jm", "call", "cnz", "cz", "cnc", "cc", "cpo", "cpe", "cp", "cm", "ret", "rnz", "rz", "rnc", "rc", "rpo", "rpe", "rp","rm", "rst", "pchl", "push", "pop", "xthl", "sphl", "in", "out", "ei", "di", "hlt", "nop"};
 
+char* directive_names[] = {"invalid_directive", "org", "end"};
+
 void fail(char* error) {
     fprintf(stderr, "%s\n", error);
     exit(-1);
@@ -31,9 +33,8 @@ pair_reg get_reg_pair(char *str) {
 		{
 			if (!strcmp(valid_register_pair_names[i], str)) {
 				return i % 4;
-			} 
+			}
 		}
-		
 	}
 	return INVALID_REG_P;
 }
@@ -46,7 +47,6 @@ single_reg get_reg(char *str) {
 		}
 	}
 	return INVALID_REG;
-	// return (strlen(str) == 1 && strchr(valid_register_names, tolower(*str)));
 }
 
 uint16_t findLabel(char* label) {
@@ -93,8 +93,8 @@ arg_t* mk_arg_reg(arg_t* arg) {
 		fail ("INVALID_REG");
 	}
 	free (arg->key);
-	arg -> type = REG;
 	arg -> key = NULL;
+	arg -> type = REG;
 	arg -> cons = r;
 	return arg->next;
 }
@@ -139,11 +139,6 @@ void free_args(arg_t* arg) {
 	free(arg);
 }
 
-// arg_t* mk_ins_opcode(instruction_t *i) {
-// 	i -> opcode = t;
-// 	return i->arg;
-// }
-
 instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1) {
 	instruction_t* ins = malloc(sizeof(instruction_t));
 	if(!ins) return NULL;
@@ -184,7 +179,7 @@ instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1) {
 		case DI:
 		case HLT:
 		case NOP:
-			free_args(arg1); break;
+			break;
 		// A16
 		case LDA:
 		case STA:
@@ -208,12 +203,11 @@ instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1) {
 		case CPE:
 		case CP:
 		case CM:
-			free_args(mk_arg_a16(arg1)); break;
-		
+			mk_arg_a16(arg1); break;
 		// A8
 		case IN:
 		case OUT:
-			free_args(mk_arg_a8(arg1)); break;
+			mk_arg_a8(arg1); break;
 
 		// REG
 		case ADD:
@@ -226,8 +220,7 @@ instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1) {
 		case ORA:
 		case XRA:
 		case CMP:
-			free_args(mk_arg_reg(arg1)); break;
-		
+			mk_arg_reg(arg1); break;
 		// IMM8
 		case ADI:
 		case ACI:
@@ -238,7 +231,7 @@ instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1) {
 		case XRI:
 		case CPI:
 		case RST:
-			free_args(mk_arg_imm8(arg1)); break;
+			mk_arg_imm8(arg1); break;
 
 		// REGP
 		case LDAX:
@@ -248,11 +241,11 @@ instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1) {
 		case DAD:
 		case PUSH:
 		case POP:
-			free_args(mk_arg_regp(arg1)); break;
+			mk_arg_regp(arg1); break;
 		
 		// REG_REG
 		case MOV:
-			free_args(mk_arg_reg(mk_arg_reg(arg1))); break;
+			mk_arg_reg(mk_arg_reg(arg1)); break;
 	
 		// REG_IMM8
 		case MVI:
@@ -279,6 +272,7 @@ instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1) {
 	if (!firstIns && !lastIns) {
 		firstIns = ins;
 		lastIns = ins;
+    printf("Instruction Type Size = %lu\n", sizeof(instruction_names) / sizeof(instruction_names[0]));
 	} else {
 		lastIns -> next = ins;
 		lastIns = ins;
@@ -290,9 +284,28 @@ instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1) {
 directive_t* mk_directive(char* opcode, int argc, arg_t* arg) {
 	directive_t* dir = malloc(sizeof(directive_t));
 	if (!dir) return NULL;
-	dir -> directive = opcode;
+  dir -> directive = INVALID_DIRECTIVE;
+  for (int i = 1; i < sizeof(directive_names) / sizeof(directive_names[0]); i++) {
+      if (!strcmp(directive_names[i], opcode)) {
+          dir -> directive = i;
+          break;
+      }
+  }
+  if (dir -> directive == INVALID_DIRECTIVE) {
+      fprintf(stderr, "INVALID DIRECTIVE %s\n", opcode);
+      fail("INVALID_DIR");
+  }
+  free(opcode);
+
 	dir -> argc = argc;
 	dir -> arg = arg;
+  switch (dir -> directive) {
+  case ORG:
+      free_args(mk_arg_a16(arg));
+      global_address = arg -> cons;
+      break;
+  default: break;
+  }
 	return dir;
 }
 
@@ -356,7 +369,7 @@ void print_arg(arg_t *arg) {
 }
 
 void print_directive(directive_t* dir) {
-	printf("(D[%i]): .%s ", dir->argc, dir -> directive);
+	printf("(D[%i]): .%s ", dir->argc, directive_names[dir -> directive]);
 	print_arg(dir->arg);
 	printf("\n");
 }
@@ -400,4 +413,37 @@ void fill_slot() {
 		}
 		currentIns = currentIns -> next;
 	}
+}
+
+void free_instruction(instruction_t* i) {
+    if (!i) return;
+    free_args(i -> arg);
+    free(i);
+}
+
+void free_directive(directive_t* d) {
+    if (!d) return;
+    free_args(d -> arg);
+    free(d);
+}
+
+void free_label(label_t *l) {
+    if (!l) return;
+    free(l -> name);
+    free(l);
+}
+
+void free_node(pnode_t* node) {
+    if (!node) return;
+    free_node(node -> next);
+    if (node -> i) free_instruction(node -> i);
+    if (node -> d) free_directive(node -> d);
+    if (node -> l) free_label(node -> l);
+    free(node);
+}
+
+void clean_up() {
+    free_node(firstNode);
+    firstNode = NULL;
+    lastNode = NULL;
 }

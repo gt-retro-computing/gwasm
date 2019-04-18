@@ -1,4 +1,4 @@
-SRCS = main.c lexer.c parser.c helpers.c
+SRCS = main.c lexer.c parser.c helpers.c code_gen.c
 CC = gcc
 
 parser: $(SRCS) helpers.h
