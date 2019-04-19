@@ -14,7 +14,7 @@ typedef enum
 
 typedef enum {INVALID_INS, MOV, MVI, LXI, LDA, STA, LHLD, SHLD, LDAX, STAX, XCHG, ADD, ADI, ADC, ACI, SUB, SUI, SBB, SBI, INR, DCR, INX, DCX, DAD, DAA, ANA, ANI, ORA, ORI, XRA, XRI, CMP, CPI, RLC, RRC, RAL, RAR, CMA, CMC, STC, JMP, JNZ, JZ, JNC, JC, JPO, JPE, JP, JM, CALL, CNZ, CZ, CNC, CC, CPO, CPE, CP, CM, RET, RNZ, RZ, RNC, RC, RPO, RPE, RP, RM, RST, PCHL, PUSH, POP, XTHL, SPHL, IN, OUT, EI, DI, HLT, NOP} instruction_type;
 
-typedef enum {INVALID_DIRECTIVE, ORG, END} directive_type;
+typedef enum {INVALID_DIRECTIVE, ORG, END, EQU} directive_type;
 
 typedef enum {
     REG_B,
@@ -62,10 +62,19 @@ typedef struct label {
     struct label *next_label;
 } label_t;
 
+typedef enum {
+    LABEL,
+    INSTRUCTION,
+    DIRECTIVE
+} nodeType_t;
+
 typedef struct pnode {
-    label_t *l;
-    instruction_t *i;
-    directive_t *d;
+    nodeType_t nodeType;
+    union {
+        label_t *label;
+        instruction_t *instruction;
+        directive_t *directive;
+    };
     struct pnode *next;
 } pnode_t;
 
@@ -86,7 +95,10 @@ arg_t* mk_arg(char* key, int cons);
 instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1); 
 directive_t* mk_directive(char* opcode, int argc, arg_t* arg);
 label_t* mk_label(char* label);
-pnode_t* mk_node(label_t *l, instruction_t *i, directive_t *d);
+
+pnode_t* mk_node_i(instruction_t*);
+pnode_t* mk_node_d(directive_t*);
+pnode_t* mk_node_l(label_t*);
 
 void print_directive(directive_t* dir);
 void print_instruction(instruction_t *ins);

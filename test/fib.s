@@ -1,8 +1,10 @@
+
+TEST .equ 0xff
+
 ;fib
 .org 0x0
 init:
-	;Test Noarg
-	sphl
+    sphl
 	mvi a, 0
 	mvi b, 1
 	mvi l, 0xFF

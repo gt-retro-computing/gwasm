@@ -3,7 +3,8 @@
     #include "parser.h"
 %}
 
-%option outfile="lexer.c" header-file="lexer.h"
+%option header-file="include/lexer.h"
+%option never-interactive
 
 %option noyywrap
 
@@ -28,9 +29,9 @@ DEC [0-9]+
 {COMMA} {return TOKEN_COMMA;}
 {COLON} {return TOKEN_COLON;}
 {DOT} {return TOKEN_DOT;}
-{DEC} { sscanf(yytext, "%i", &yylval.num); return TOKEN_NUM; }
-{OCT} { sscanf(yytext, "%o", &yylval.num); return TOKEN_NUM; }
 {HEX} { sscanf(yytext, "%x", &yylval.num); return TOKEN_NUM; }
+{OCT} { sscanf(yytext, "%o", &yylval.num); return TOKEN_NUM; }
+{DEC} { sscanf(yytext, "%i", &yylval.num); return TOKEN_NUM; }
 {IDENT} { yylval.ident = copy_str(yytext); return TOKEN_IDENT;}
 
 %%

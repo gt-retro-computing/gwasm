@@ -5,9 +5,6 @@
     void yyerror(const char*);
 %}
 
-%output "parser.c"
-%defines "parser.h"
-
 %union {
     int num;
     char *ident;
@@ -16,6 +13,8 @@
     directive_t* directive;
     label_t* label;
 }
+
+%defines "include/parser.h"
 
 %token TOKEN_DOT
 %token TOKEN_COLON
@@ -35,14 +34,12 @@
 prog :  
     | prog TOKEN_LINEBREAK
     | prog label[l]
-    { mk_node($l, NULL, NULL); }
+    { mk_node_l($l); }
     | prog directive[d]
-    { mk_node(NULL, NULL, $d); }
+    { mk_node_d($d); }
     | prog instruction[ins]
-    { mk_node(NULL, $ins, NULL); }
+    { mk_node_i($ins); }
 
-label : TOKEN_IDENT[lab] TOKEN_COLON
-    { $$ = mk_label($lab); }
 
 instruction : TOKEN_IDENT[tok] TOKEN_LINEBREAK
         { $$ = mk_instruction($tok, 0, NULL); }
@@ -50,6 +47,11 @@ instruction : TOKEN_IDENT[tok] TOKEN_LINEBREAK
         { $$ = mk_instruction($tok, 1, $a1); }
     | TOKEN_IDENT[tok] arg[a1] TOKEN_COMMA arg[a2] TOKEN_LINEBREAK
         { $a1 -> next = $a2; $$ = mk_instruction($tok, 2, $a1); }
+
+label : TOKEN_IDENT[lab] TOKEN_COLON
+    { $$ = mk_label($lab); }
+    | TOKEN_IDENT[lab]
+    { $$ = mk_label($lab); }
 
 directive : TOKEN_DOT TOKEN_IDENT[dir] TOKEN_LINEBREAK
         { $$ = mk_directive($dir, 0, NULL); }

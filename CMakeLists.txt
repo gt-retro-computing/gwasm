@@ -1,0 +1,25 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
+project(gwasm)
+
+FIND_PACKAGE(BISON REQUIRED)
+FIND_PACKAGE(FLEX REQUIRED)
+
+BISON_TARGET(Parser parser.y ${CMAKE_SOURCE_DIR}/gen/parser.c )
+FLEX_TARGET(Lexer lexer.l  ${CMAKE_SOURCE_DIR}/gen/lexer.c )
+ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
+
+#MESSAGE("---------------------------------")
+MESSAGE(${CMAKE_CURRENT_SOURCE_DIR})
+MESSAGE(${BISON_Parser_OUTPUTS})
+MESSAGE(${FLEX_Lexer_OUTPUTS})
+#MESSAGE("---------------------------------")
+
+AUX_SOURCE_DIRECTORY(src SOURCES)
+INCLUDE_DIRECTORIES(include)
+INCLUDE_DIRECTORIES(.)
+ADD_EXECUTABLE(gwasm
+        ${BISON_Parser_OUTPUTS}
+        ${FLEX_Lexer_OUTPUTS}
+        ${SOURCES}
+        )

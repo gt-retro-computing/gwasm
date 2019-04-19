@@ -1,11 +1,8 @@
-assembler
-*.o
-lexer.c
-parser.c
 lexer.h
 parser.h
+gen
 .idea/
 .vscode/
-*.out
-*.tmp
-parser
+*.iml
+*.ipr
+*.iws
