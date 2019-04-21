@@ -1,12 +1,14 @@
 
 TEST .equ 0xff
+Zero .equ 0
+One .equ 1
 
 ;fib
 .org 0x0
 init:
     sphl
-	mvi a, 0
-	mvi b, 1
+	mvi a, Zero
+	mvi b, One
 	mvi l, 0xFF
 fib:
 	mov c, a

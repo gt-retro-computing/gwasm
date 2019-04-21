@@ -4,8 +4,11 @@
 typedef enum
 {
     IMM8,
+    IMM8_SLOT,
     IMM16,
+    IMM16_SLOT,
     A8,
+    A8_SLOT,
     A16,
     A16_SLOT,
     REG, REGP,
@@ -38,7 +41,7 @@ typedef enum {
 
 typedef struct arg {
     char* key;
-    uint16_t cons;
+    int16_t cons;
     arg_type type;
     struct arg *next;
 } arg_t;
@@ -91,7 +94,7 @@ label_t *lastLabel;
 
 char* copy_str(const char *in);
 
-arg_t* mk_arg(char* key, int cons);
+arg_t* mk_arg(char* key, int16_t cons);
 instruction_t* mk_instruction(char* opcode, int argc, arg_t* arg1); 
 directive_t* mk_directive(char* opcode, int argc, arg_t* arg);
 label_t* mk_label(char* label);

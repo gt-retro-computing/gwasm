@@ -66,7 +66,7 @@ uint16_t findLabel(char *label) {
     return 0;
 }
 
-arg_t *mk_arg(char *key, int cons) {
+arg_t *mk_arg(char *key, int16_t cons) {
     arg_t *arg = malloc(sizeof(arg_t));
     if (!arg) return NULL;
     arg->key = key;
@@ -116,7 +116,11 @@ arg_t *mk_arg_a16(arg_t *arg) {
 
 arg_t *mk_arg_a8(arg_t *arg) {
     if (!arg) fail("NULLPTR MK_ARG_A8");
-    arg->type = A8;
+    if (arg -> key) {
+        arg->type = A8_SLOT;
+    } else {
+        arg->type = A8;
+    }
     global_address++;
     return arg->next;
 }
@@ -124,14 +128,22 @@ arg_t *mk_arg_a8(arg_t *arg) {
 
 arg_t *mk_arg_imm16(arg_t *arg) {
     if (!arg) fail("NULLPTR MK_ARG_IMM16");
-    arg->type = IMM16;
+    if (arg -> key) {
+        arg->type = IMM16_SLOT;
+    } else {
+        arg->type = IMM16;
+    }
     global_address += 2;
     return arg->next;
 }
 
 arg_t *mk_arg_imm8(arg_t *arg) {
     if (!arg) fail("NULLPTR MK_ARG_IMM8");
-    arg->type = IMM8;
+    if (arg -> key) {
+        arg->type = IMM8_SLOT;
+    } else {
+        arg->type = IMM8;
+    }
     global_address++;
     return arg->next;
 }
@@ -311,7 +323,7 @@ directive_t *mk_directive(char *opcode, int argc, arg_t *arg) {
     switch (dir->directive) {
         case ORG:
             free_args(mk_arg_a16(arg));
-            global_address = arg->cons;
+            global_address = (uint16_t)arg->cons;
             break;
         case EQU:
             free_args(mk_arg_a8(arg));
@@ -380,12 +392,13 @@ pnode_t *mk_node_d(directive_t *d) {
     switch (n->directive->directive) {
         case EQU:
             if (previousNode->nodeType == LABEL) {
-                previousNode->label->addr = n->directive->arg->cons;
+                previousNode->label->addr = (uint8_t)n->directive->arg->cons;
             } else {
                 fail(".EQU directive must be after a Label");
             }
             break;
-        default: break;
+        default:
+            break;
     }
     return n;
 }
@@ -402,7 +415,12 @@ void print_arg(arg_t *arg) {
             printf("(ADDR 0x%X) ", arg->cons);
             break;
         case A16_SLOT:
+        case A8_SLOT:
             printf("(ADDR [%s]) ", arg->key);
+            break;
+        case IMM16_SLOT:
+        case IMM8_SLOT:
+            printf("(IMM [%s]) ", arg->key);
             break;
         case REG:
             printf("(REG %c)", valid_register_names[arg->cons]);
@@ -411,6 +429,7 @@ void print_arg(arg_t *arg) {
             printf("(REGP %s)", valid_register_pair_names[arg->cons]);
             break;
         default:
+            printf("(UNKNOWN ARG %s - %d", arg->key ? arg->key : "NULL", arg->cons);
             break;
     }
     print_arg(arg->next);
@@ -457,11 +476,18 @@ void fill_slot() {
     while (currentIns) {
         arg_t *currentArg = currentIns->arg;
         while (currentArg) {
-            if (currentArg->type == A16_SLOT) {
-                currentArg->cons = findLabel(currentArg->key);
-                currentArg->type = A16;
-                free(currentArg->key);
-                currentArg->key = NULL;
+            switch (currentArg->type) {
+                case A16_SLOT:
+                case A8_SLOT:
+                case IMM8_SLOT:
+                case IMM16_SLOT:
+                    currentArg->cons = findLabel(currentArg->key);
+                    currentArg->type -= 1; // Solely based on the ordering on the enum
+                    free(currentArg->key);
+                    currentArg->key = NULL;
+                    break;
+                default:
+                    break;
             }
             currentArg = currentArg->next;
         }
